@@ -1,0 +1,57 @@
+namespace: ${namespace}
+stacker_bucket: ${stacker_bucket_name}
+
+common: &common
+  KeyName: townsenddw
+  #Amazon EKS-optimized AMI version 1.11 01-01-2019
+  NodeImageId: ${node_image_id}
+  NodeAutoScalingGroupMaxSize: 5
+  NodeAutoScalingGroupDesiredCapacity: 1
+  ClusterName: ${rxref eks-cluster::ClusterName}
+  ClusterControlPlaneSecurityGroup: ${rxref vpc::SecurityGroups}
+  VpcId: ${rxref vpc::VpcId}
+  Subnets: ${rxref vpc::SubnetIds}
+  NodeInstanceProfile: ${rxref node-role::NodeInstanceProfile}
+  NodeInstanceRole: ${rxref node-role::NodeInstanceRole}
+  NodeSecurityGroup: ${rxref node-role::NodeSecurityGroup}
+
+pre_build:
+
+  - path: hooks.eks.installConfigMap
+    required: false
+    enabled: true
+    args:
+      clusterName: ${cluster_name}
+      nodeArn: ${node_arn}
+
+stacks:
+
+  bastion:
+    template_path: templates/bastion.yaml
+    variables:
+      << : *common
+      NodeImageId: ami-01bbe152bf19d0289
+      NodeInstanceType: t3.micro
+      NodeAutoScalingGroupMaxSize: 1
+      NodeGroupName: bastion
+
+  m5-2xlarge-spot:
+    template_path: templates/eks-nodegroup.yaml
+    variables:
+      << : *common
+      NodeInstanceType: m5.2xlarge
+      NodeGroupName: spot-m5-2xlarge
+
+  c5-2xlarge-spot:
+    template_path: templates/eks-nodegroup.yaml
+    variables:
+      << : *common
+      NodeInstanceType: c5.2xlarge
+      NodeGroupName: spot-c5-2xlarge
+
+  r4-2xlarge-spot:
+    template_path: templates/eks-nodegroup.yaml
+    variables:
+      << : *common
+      NodeInstanceType: r4.2xlarge
+      NodeGroupName: spot-r4-2xlarge
