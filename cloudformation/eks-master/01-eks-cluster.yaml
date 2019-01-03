@@ -1,0 +1,30 @@
+namespace: ${namespace}
+stacker_bucket: ${stacker_bucket_name}
+
+stacks:
+
+  vpc:
+    template_path: templates/vpc.yaml
+    variables:
+      VpcBlock: 10.42.0.0/16
+      Subnet01Block: 10.42.1.0/24
+      Subnet02Block: 10.42.2.0/24
+      Subnet03Block: 10.42.3.0/24
+
+  eks-role:
+    template_path: templates/eks-service-role.yaml
+
+  eks-cluster:
+    template_path: templates/eks-cluster.yaml
+    variables:
+      ClusterName: ${cluster_name}
+      ControlPlaneSecurityGroup: ${output vpc::SecurityGroups}
+      EksRoleArn: ${output eks-role::RoleArn}
+      Subnets: ${output vpc::SubnetIds}
+
+  node-role:
+    template_path: templates/eks-node-role.yaml
+    variables:
+      ClusterName: ${cluster_name}
+      ClusterControlPlaneSecurityGroup: ${output vpc::SecurityGroups}
+      VpcId: ${output vpc::VpcId}
