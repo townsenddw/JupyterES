@@ -2,5 +2,7 @@
 deployments:
   - modules:
       - codebuild
+      - eks-master
+      - eks-nodes
     regions:
       - us-west-2

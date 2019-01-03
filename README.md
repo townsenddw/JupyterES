@@ -1,2 +1,4 @@
 # JupyterES
 Repository for JupyterES related code
+
+![Build Status](https://codebuild.us-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiUVBUMHNBaFF6R1dFUzlsKzRmYy85UWo0UzRacFF6TWtzSzFNSXgwZkZoTDNRd3ZUUk4yaW9XTW5RL0JEcnM5aVJJeG13WmJlSVZya3UrRDl6NzNmMDU0PSIsIml2UGFyYW1ldGVyU3BlYyI6InBxT0FsREVlb0NXamJ3d2IiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
