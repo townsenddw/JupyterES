@@ -11,6 +11,7 @@ common: &common
   ClusterControlPlaneSecurityGroup: ${rxref vpc::SecurityGroups}
   VpcId: ${rxref vpc::VpcId}
   Subnets: ${rxref vpc::SubnetIds}
+  NodeVolumeSize: 150
   NodeInstanceProfile: ${rxref node-role::NodeInstanceProfile}
   NodeInstanceRole: ${rxref node-role::NodeInstanceRole}
   NodeSecurityGroup: ${rxref node-role::NodeSecurityGroup}
@@ -23,6 +24,13 @@ pre_build:
     args:
       clusterName: ${cluster_name}
       nodeArn: ${node_arn}
+  # - path: hooks.eks.installHelm
+  #   enabled: true
+  - path: stacker.hooks.command.run_command
+    required: true
+    enabled: true
+    args:
+      command: ['kubectl', 'apply', '-f', 'hooks/storageclass.yaml']
 
 stacks:
 
@@ -39,19 +47,49 @@ stacks:
     template_path: templates/eks-nodegroup.yaml
     variables:
       << : *common
+      NodeAutoScalingGroupMinSize: 0
       NodeInstanceType: m5.2xlarge
       NodeGroupName: spot-m5-2xlarge
+      SpotPrice: '0.30'
 
   c5-2xlarge-spot:
     template_path: templates/eks-nodegroup.yaml
     variables:
       << : *common
+      NodeAutoScalingGroupMinSize: 0
       NodeInstanceType: c5.2xlarge
       NodeGroupName: spot-c5-2xlarge
+      SpotPrice: '0.30'
 
   r4-2xlarge-spot:
     template_path: templates/eks-nodegroup.yaml
     variables:
       << : *common
+      NodeAutoScalingGroupMaxSize: 10
+      NodeAutoScalingGroupMinSize: 3
       NodeInstanceType: r4.2xlarge
       NodeGroupName: spot-r4-2xlarge
+      SpotPrice: '0.30'
+
+  t2-medium-spot:
+    template_path: templates/eks-nodegroup.yaml
+    variables:
+      << : *common
+      BootstrapArguments: --kubelet-extra-args '--node-labels=hub.jupyter.org/node-purpose=user --register-with-taints=hub.jupyter.org/dedicated=user:NoSchedule'
+      NodeAutoScalingGroupMaxSize: 0
+      NodeAutoScalingGroupMinSize: 0
+      NodeInstanceType: t2.medium
+      NodeGroupName: spot-t2-medium
+      NodeVolumeSize: 30
+      SpotPrice: '0.30'
+
+  t2-medium-od:
+    template_path: templates/eks-nodegroup-od.yaml
+    variables:
+      << : *common
+      BootstrapArguments: --kubelet-extra-args '--node-labels=hub.jupyter.org/node-purpose=user --register-with-taints=hub.jupyter.org/dedicated=user:NoSchedule'
+      NodeAutoScalingGroupMaxSize: 0
+      NodeAutoScalingGroupMinSize: 0
+      NodeInstanceType: t2.medium
+      NodeGroupName: od-t2-medium
+      NodeVolumeSize: 30

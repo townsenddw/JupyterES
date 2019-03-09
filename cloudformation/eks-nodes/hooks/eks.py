@@ -15,6 +15,10 @@ def kubectl(*args, **kwargs):
     #logging.info("Executing kubectl", ' '.join(args))
     return subprocess.check_call(['kubectl'] + list(args), **kwargs)
 
+def helm(*args, **kwargs):
+    # logging.info("Executing helm", ' '.join(args))
+    return subprocess.check_call(['helm'] + list(args), **kwargs)
+
 def writeAuthCM(nodeArn, ADMINS):
     ## Apply ARN of instance role of worker nodes and apply to cluster
     print(os.getcwd())
@@ -34,3 +38,29 @@ def installConfigMap(provider, context, clusterName, nodeArn):
     writeAuthCM(nodeArn, ADMINS)
     aws('eks','update-kubeconfig', '--name', clusterName)
     return kubectl('apply', '-f', 'aws-auth-cm.yaml')
+
+def installStorageClass(provider, context):
+    ## Storage Class
+    try:
+        kubectl('delete', 'storageclass', 'gp2')
+    except:
+        pass
+    finally:
+        kubectl('apply', '-f', 'storageclass.yaml')
+
+def installHelm(provider, context):
+    ## Install Tiller serviceaccount and clusterrolbinding - Idempotent
+    # Tiller ServiceAccount Creation
+    try:
+        kubectl('-n','kube-system','get','serviceaccount','tiller')
+    except:
+        kubectl('--namespace', 'kube-system', 'create', 'serviceaccount', 'tiller')
+
+    # ClusterRoleBinding
+    try:
+        kubectl('get', 'clusterrolebinding', 'tiller')
+    except:
+        kubectl('create', 'clusterrolebinding', 'tiller', '--clusterrole=cluster-admin', '--serviceaccount=kube-system:tiller')
+
+    # Inititalize Helm/Tiller for the cluster
+    helm('init', '--service-account', 'tiller')
